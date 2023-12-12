@@ -1,0 +1,7 @@
+{
+  "name": "techtaskPokemon",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
