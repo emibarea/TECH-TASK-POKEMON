@@ -3,7 +3,7 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonCardContent,
-  IonCardSubtitle,
+  IonText,
 } from "@ionic/react";
 
 const PokeCard: React.FC<Pokemon> = ({
@@ -29,33 +29,40 @@ const PokeCard: React.FC<Pokemon> = ({
         </IonCardTitle>
       </IonCardHeader>
       <IonCardContent>
-        <p>
+        <IonText>
           Altura:{" "}
-          <span style={{ color: "white", fontWeight: "700" }}>{height}</span>
-        </p>
-        <p>
+          <IonText style={{ color: "white", fontWeight: "700" }}>
+            {height}
+          </IonText>
+        </IonText>
+        <br />
+        <IonText>
           Peso:{" "}
-          <span style={{ color: "white", fontWeight: "700" }}>{weight}</span>
-        </p>
-        <p>
+          <IonText style={{ color: "white", fontWeight: "700" }}>
+            {weight}
+          </IonText>
+        </IonText>
+        <br />
+        <IonText>
           Experiencia:{" "}
-          <span style={{ color: "white", fontWeight: "700" }}>
+          <IonText style={{ color: "white", fontWeight: "700" }}>
             {base_experience}
-          </span>
-        </p>
-        <p>
+          </IonText>
+        </IonText>
+        <br />
+        <IonText>
           Habilidades:{" "}
           {pokemon_v2_pokemonabilities?.map((item, index) => (
-            <span key={index} style={{ color: "white", fontWeight: "700" }}>
+            <IonText key={index} style={{ color: "white", fontWeight: "700" }}>
               {item.pokemon_v2_ability.name}
               {index < pokemon_v2_pokemonabilities.length - 1 && index === 0
                 ? " / "
                 : index < pokemon_v2_pokemonabilities.length - 1
                 ? " / "
                 : ""}
-            </span>
+            </IonText>
           ))}
-        </p>
+        </IonText>
       </IonCardContent>
     </IonCard>
   );

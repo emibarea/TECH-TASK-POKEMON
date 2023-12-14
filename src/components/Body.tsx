@@ -1,48 +1,30 @@
-import { useQuery, gql } from "@apollo/client";
-import { IonCol, IonTitle, IonRow } from "@ionic/react";
+import { useState, useEffect } from "react";
+import {
+  IonCol,
+  IonTitle,
+  IonRow,
+  IonContent,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import PokeCard from "./PokeCard";
+import usePokemonData from "../api/usePokemonData";
 
-interface PokemonData {
-  pokemon_v2_pokemon: Pokemon[];
-}
 interface BodyProps {
-  currentPage: number; // Definir currentPage como un número
+  currentPage: number;
+  ITEMS_PER_PAGE: number;
 }
 
-const ITEMS_PER_PAGE = 16;
+const Body: React.FC<BodyProps> = ({ currentPage, ITEMS_PER_PAGE }) => {
+  const [shuffledPokemon, setShuffledPokemon] = useState<Pokemon[]>([]); //estado para mesclar pokemons ya que vienen ordenados en data
+  const [currentPokemonPage, setCurrentPokemonPage] = useState<Pokemon[]>([]); //estado para asignar los pokemons que deben ir por cada pagina
+  const [refreshCount, setRefreshCount] = useState(0); //estado para que se ejecute el useEffect y poder hacer el refetch de data
 
-const Body: React.FC<BodyProps> = ({ currentPage }) => {
-  const MY_QUERY = gql`
-    query Pokemons($limit: Int!, $offset: Int!) {
-      pokemon_v2_pokemon(
-        limit: $limit
-        offset: $offset
-        where: {
-          id: { _lte: 200 }
-          pokemon_v2_pokemonabilities: { pokemon_v2_ability: {} }
-        }
-      ) {
-        name
-        base_experience
-        height
-        weight
-        id
-        pokemon_v2_pokemonabilities {
-          pokemon_v2_ability {
-            name
-          }
-        }
-      }
-    }
-  `;
+  const { loading, error, data, refetch } = usePokemonData();
 
-  const { loading, error, data } = useQuery<PokemonData>(MY_QUERY, {
-    variables: {
-      limit: ITEMS_PER_PAGE,
-      offset: (currentPage - 1) * ITEMS_PER_PAGE,
-    },
-  });
   if (error) {
+    //si la peticion retorna error, lo mostramos en pantalla
     return (
       <IonTitle style={{ textAlign: "center" }}>
         Error al cargar Pokemons...
@@ -50,11 +32,8 @@ const Body: React.FC<BodyProps> = ({ currentPage }) => {
     );
   }
 
-  // Suponiendo que data?.pokemon_v2_pokemon contiene todos los Pokémon
-  const allPokemon = data?.pokemon_v2_pokemon || [];
-
-  // Función para mezclar aleatoriamente un array
   const shuffleArray = (array: any[]) => {
+    //función para mezclar aleatoriamente un array
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -63,11 +42,33 @@ const Body: React.FC<BodyProps> = ({ currentPage }) => {
     return shuffled;
   };
 
-  // Mezclar aleatoriamente los Pokémon
-  const shuffledPokemon = shuffleArray(allPokemon);
+  useEffect(() => {
+    if (data) {
+      const allPokemon = data.pokemon_v2_pokemon;
+      const shuffled = shuffleArray(allPokemon);
+      setShuffledPokemon(shuffled); //mesclamos el array de pokemons
+    }
+  }, [data, refreshCount]);
+
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedPokemon = shuffledPokemon.slice(startIndex, endIndex);
+    setCurrentPokemonPage(paginatedPokemon); //asignamos los pokemons de cada pagina
+  }, [currentPage, shuffledPokemon, ITEMS_PER_PAGE]);
+
+  function handleRefresh(event: CustomEvent<RefresherEventDetail>) {
+    refetch().then(() => {
+      setRefreshCount(refreshCount + 1); //incrementa refreshCount después de cada refetch
+      event.detail.complete();
+    });
+  }
 
   return (
-    <>
+    <IonContent className="ion-padding">
+      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+        <IonRefresherContent></IonRefresherContent>
+      </IonRefresher>
       {loading ? (
         <IonTitle
           style={{
@@ -81,7 +82,7 @@ const Body: React.FC<BodyProps> = ({ currentPage }) => {
         </IonTitle>
       ) : (
         <IonRow>
-          {shuffledPokemon?.map(
+          {currentPokemonPage.map(
             ({
               name,
               weight,
@@ -112,7 +113,7 @@ const Body: React.FC<BodyProps> = ({ currentPage }) => {
           )}
         </IonRow>
       )}
-    </>
+    </IonContent>
   );
 };
 
